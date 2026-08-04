@@ -1,0 +1,3 @@
+# Versiones fijadas para que todos ejecutemos el mismo entorno.
+mediapipe==0.10.35
+opencv-contrib-python==5.0.0.93

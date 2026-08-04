@@ -1,0 +1,17 @@
+# Entorno virtual y paquetes de Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Herramientas de desarrollo
+.DS_Store
+.idea/
+.pytest_cache/
+.ruff_cache/
+
+# Datos personales o grabaciones locales
+data/images/*
+data/videos/*
+!data/images/.gitkeep
+!data/videos/.gitkeep
+

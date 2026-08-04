@@ -10,6 +10,26 @@ MODEL_PATH = (
     / "face_landmarker.task"
 )
 
+HIGHLIGHTED_POINTS = {
+    # Boca: superior, inferior, izquierda y derecha
+    13: (255, 0, 255),
+    14: (255, 0, 255),
+    61: (255, 0, 255),
+    291: (255, 0, 255),
+
+    # Ojo derecho de la persona
+    33: (255, 255, 0),
+    133: (255, 255, 0),
+    159: (255, 255, 0),
+    145: (255, 255, 0),
+
+    # Ojo izquierdo de la persona
+    362: (0, 165, 255),
+    263: (0, 165, 255),
+    386: (0, 165, 255),
+    374: (0, 165, 255),
+}
+
 options = mp.tasks.vision.FaceLandmarkerOptions(
     base_options=mp.tasks.BaseOptions(
         model_asset_path=str(MODEL_PATH)
@@ -54,18 +74,30 @@ try:
             color = (0, 255, 0)
 
             face = result.face_landmarks[0]
-            for landmark in face:
+            for index, point_color in HIGHLIGHTED_POINTS.items():
+                landmark = face[index]
+
                 x = int(landmark.x * width)
                 y = int(landmark.y * height)
 
                 cv2.circle(
                     frame,
                     (x, y),
-                    1,
-                    (0,255, 255),
+                    5,
+                    point_color,
                     -1,
                 )
-                
+
+                cv2.putText(
+                    frame,
+                    str(index),
+                    (x + 5, y - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    point_color,
+                    1,
+                )
+
         else: 
             message = 'Sin rostro'
             color = (0, 0 , 255)

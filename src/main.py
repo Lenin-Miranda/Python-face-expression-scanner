@@ -52,6 +52,20 @@ try:
         if face_detected:
             message = "Rostro detectado"
             color = (0, 255, 0)
+
+            face = result.face_landmarks[0]
+            for landmark in face:
+                x = int(landmark.x * width)
+                y = int(landmark.y * height)
+
+                cv2.circle(
+                    frame,
+                    (x, y),
+                    1,
+                    (0,255, 255),
+                    -1,
+                )
+                
         else: 
             message = 'Sin rostro'
             color = (0, 0 , 255)

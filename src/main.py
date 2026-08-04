@@ -30,6 +30,14 @@ HIGHLIGHTED_POINTS = {
     374: (0, 165, 255),
 }
 
+MOUTH_OPEN_THRESHOLD = 0.08
+
+def pixel_distance(point_a, point_b, width, height):
+    delta_x = (point_a.x - point_b.x) * width
+    delta_y = (point_a.y - point_b.y) * height
+
+    return (delta_x ** 2 + delta_y ** 2) ** 0.5
+
 options = mp.tasks.vision.FaceLandmarkerOptions(
     base_options=mp.tasks.BaseOptions(
         model_asset_path=str(MODEL_PATH)
@@ -74,6 +82,35 @@ try:
             color = (0, 255, 0)
 
             face = result.face_landmarks[0]
+            mouth_opening = pixel_distance(
+                face[13],
+                face[14],
+                width,
+                height,
+            )
+
+            mouth_width = pixel_distance(
+                face[61],
+                face[291],
+                width,
+                height,
+            )
+
+            if mouth_width > 0:
+                mouth_ratio = mouth_opening / mouth_width
+
+            else:
+                mouth_ratio = 0.0
+
+
+            if mouth_ratio > MOUTH_OPEN_THRESHOLD:
+                mouth_message = f'Boca abierta: {mouth_ratio:.2f}'
+                mouth_color = (0, 255, 255)
+
+            else:
+                mouth_message = f'Boca cerrada: {mouth_ratio:.2f}'
+                mouth_color = (255, 255, 255)
+
             for index, point_color in HIGHLIGHTED_POINTS.items():
                 landmark = face[index]
 
@@ -96,6 +133,16 @@ try:
                     0.4,
                     point_color,
                     1,
+                )
+
+                cv2.putText(
+                    frame,
+                    mouth_message,
+                    (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    mouth_color,
+                    2,
                 )
 
         else: 

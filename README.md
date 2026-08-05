@@ -13,7 +13,7 @@ finalmente, interpretaremos gestos visibles como parpadear o abrir la boca.
 - OpenCV para acceder a la webcam y dibujar imágenes.
 - MediaPipe Face Landmarker para detectar el rostro y sus puntos.
 - El modelo oficial en `models/face_landmarker.task`.
-- `src/main.py` como archivo de trabajo para las lecciones.
+- Módulos separados para cámara, configuración, matemáticas, análisis y dibujo.
 - Carpetas locales para imágenes y videos que Git no publicará.
 
 ## Abrir el entorno
@@ -66,7 +66,7 @@ responde, vuelve a la terminal y presiona `Control + C`.
 6. Leer los 52 movimientos faciales (*blendshapes*).
 7. Crear reglas para parpadeo, boca abierta y sonrisa visible.
 8. Reducir el parpadeo de resultados usando varios fotogramas.
-9. Organizar el programa en funciones y añadir pruebas.
+9. Organizar el programa en módulos y añadir pruebas.
 
 No avanzaremos a reconocimiento de identidad hasta dominar estas partes y
 revisar sus implicaciones de privacidad.
@@ -81,7 +81,11 @@ revisar sus implicaciones de privacidad.
 ├── models/
 │   └── face_landmarker.task
 ├── src/
-│   └── main.py            # Tú escribirás aquí
+│   ├── config.py          # Rutas, índices y umbrales
+│   ├── drawing.py         # Elementos dibujados con OpenCV
+│   ├── expressions.py     # Estado y análisis de expresiones visibles
+│   ├── geometry.py        # Distancias y proporciones
+│   └── main.py            # Cámara y flujo principal
 ├── requirements.txt
 └── README.md
 ```
@@ -107,4 +111,3 @@ de él.
 - No publiques `data/` ni bases de rostros.
 - Describe resultados como movimientos faciales observados, no como emociones
   o diagnósticos psicológicos.
-

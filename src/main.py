@@ -32,6 +32,7 @@ HIGHLIGHTED_POINTS = {
 
 MOUTH_OPEN_THRESHOLD = 0.08
 EYE_CLOSED_THRESHOLD = 0.18
+MIN_CLOSED_FRAMES = 2
 
 def pixel_distance(point_a, point_b, width, height):
     delta_x = (point_a.x - point_b.x) * width
@@ -82,6 +83,8 @@ if not camera.isOpened():
     raise RuntimeError("No se pudo abrir la camara")
 
 
+blink_count = 0
+closed_frame_count = 0
 
 try: 
     while True:
@@ -111,9 +114,12 @@ try:
             color = (0, 255, 0)
 
             face = result.face_landmarks[0]
-            mouth_opening = pixel_distance(
-                face[13],
-                face[14],
+            mouth_opening = opening_ratio(
+                face,
+                13,
+                14,
+                61,
+                291,
                 width,
                 height,
             )
@@ -125,21 +131,15 @@ try:
                 height,
             )
 
-            if mouth_width > 0:
-                mouth_ratio =  opening_ratio(
-                    face,
-                    13,
-                    14,
-                    61,
-                    291,
-                    width,
-                    height,
-                )
-
-       
-
-            else:
-                mouth_ratio = 0.0
+            mouth_ratio = opening_ratio(
+                face,
+                13,
+                14,
+                61,
+                291,
+                width,
+                height,
+            )
 
 
             left_eye_ratio = opening_ratio(
@@ -164,6 +164,16 @@ try:
 
             right_eye_closed = right_eye_ratio < EYE_CLOSED_THRESHOLD
             left_eye_closed = left_eye_ratio < EYE_CLOSED_THRESHOLD
+
+            both_eyes_closed = right_eye_closed and left_eye_closed
+
+            if both_eyes_closed:
+                closed_frame_count += 1
+            else:
+                if closed_frame_count >= MIN_CLOSED_FRAMES:
+                    blink_count += 1
+
+                closed_frame_count = 0
 
             if mouth_ratio > MOUTH_OPEN_THRESHOLD:
                 mouth_message = f'Boca abierta: {mouth_ratio:.2f}'
@@ -200,7 +210,7 @@ try:
                     -1,
                 )
 
-                cv2.putText(
+            cv2.putText(
                     frame,
                     str(index),
                     (x + 5, y - 5),
@@ -210,7 +220,7 @@ try:
                     1,
                 )
 
-                cv2.putText(
+            cv2.putText(
                     frame,
                     mouth_message,
                     (20, 80),
@@ -220,7 +230,7 @@ try:
                     2,
                 )
 
-                cv2.putText(
+            cv2.putText(
                     frame,
                     (
                         f'{eye_message}'
@@ -234,9 +244,20 @@ try:
                     2,
                 )
 
+            cv2.putText(
+                    frame,
+                    f'Parpadeos: {blink_count}',
+                    (20, 160),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (255, 255, 255),
+                    2,
+                )
+
         else: 
             message = 'Sin rostro'
             color = (0, 0 , 255)
+            closed_frame_count = 0
         
         cv2.putText(
                     frame,

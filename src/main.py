@@ -31,6 +31,7 @@ HIGHLIGHTED_POINTS = {
 }
 
 MOUTH_OPEN_THRESHOLD = 0.08
+EYE_CLOSED_THRESHOLD = 0.18
 
 def pixel_distance(point_a, point_b, width, height):
     delta_x = (point_a.x - point_b.x) * width
@@ -45,6 +46,34 @@ options = mp.tasks.vision.FaceLandmarkerOptions(
     running_mode=mp.tasks.vision.RunningMode.IMAGE,
     num_faces=1,
 )
+
+def opening_ratio(
+        face,
+        top_index,
+        bottom_index,
+        left_index,
+        right_index,
+        width,
+        height,
+):
+    opening = pixel_distance(
+        face[top_index],
+        face[bottom_index],
+        width,
+        height,
+    )
+
+    feature_width = pixel_distance(
+        face[left_index],
+        face[right_index],
+        width,
+        height,
+    )
+
+    if feature_width == 0:
+        return 0.0
+
+    return opening / feature_width
 
 landmarker = mp.tasks.vision.FaceLandmarker.create_from_options(options)
 camera = cv2.VideoCapture(0)
@@ -97,11 +126,44 @@ try:
             )
 
             if mouth_width > 0:
-                mouth_ratio = mouth_opening / mouth_width
+                mouth_ratio =  opening_ratio(
+                    face,
+                    13,
+                    14,
+                    61,
+                    291,
+                    width,
+                    height,
+                )
+
+       
 
             else:
                 mouth_ratio = 0.0
 
+
+            left_eye_ratio = opening_ratio(
+                face,
+                159,
+                145,
+                33,
+                133,
+                width,
+                height,
+            )
+
+            right_eye_ratio = opening_ratio(
+                face,
+                386,
+                374,
+                362,
+                263,
+                width,
+                height,
+            )
+
+            right_eye_closed = right_eye_ratio < EYE_CLOSED_THRESHOLD
+            left_eye_closed = left_eye_ratio < EYE_CLOSED_THRESHOLD
 
             if mouth_ratio > MOUTH_OPEN_THRESHOLD:
                 mouth_message = f'Boca abierta: {mouth_ratio:.2f}'
@@ -110,6 +172,19 @@ try:
             else:
                 mouth_message = f'Boca cerrada: {mouth_ratio:.2f}'
                 mouth_color = (255, 255, 255)
+
+            if right_eye_closed and left_eye_closed:
+                eye_message = "Ambos ojos cerrados"
+                eye_color = (0, 0, 255)
+            elif right_eye_closed:
+                eye_message = "Ojo derecho cerrado"
+                eye_color = (0,255,255)
+            elif left_eye_closed:
+                eye_message = 'Ojo izquierdo cerrado'
+                eye_color = (0, 255,255)
+            else:
+                eye_message = 'Ojos abiertos'
+                eye_color = (0, 255, 0)
 
             for index, point_color in HIGHLIGHTED_POINTS.items():
                 landmark = face[index]
@@ -142,6 +217,20 @@ try:
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.8,
                     mouth_color,
+                    2,
+                )
+
+                cv2.putText(
+                    frame,
+                    (
+                        f'{eye_message}'
+                        f"D: {right_eye_ratio: .2f}"
+                        f"I: {left_eye_ratio: .2f}"
+                    ),
+                    (20,120),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    eye_color,
                     2,
                 )
 

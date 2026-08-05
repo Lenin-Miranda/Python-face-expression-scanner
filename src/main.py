@@ -1,7 +1,10 @@
 from pathlib import Path
+from collections import deque
+from pathlib import Path
 
 import cv2
 import mediapipe as mp
+
 
 
 MODEL_PATH = (
@@ -33,6 +36,7 @@ HIGHLIGHTED_POINTS = {
 MOUTH_OPEN_THRESHOLD = 0.08
 EYE_CLOSED_THRESHOLD = 0.18
 MIN_CLOSED_FRAMES = 2
+SMOORHING_WINDOW = 3
 
 def pixel_distance(point_a, point_b, width, height):
     delta_x = (point_a.x - point_b.x) * width
@@ -85,6 +89,11 @@ if not camera.isOpened():
 
 blink_count = 0
 closed_frame_count = 0
+mouth_ratio_history = deque(maxlen=SMOORHING_WINDOW)
+right_eye_ratio_history = deque(maxlen=SMOORHING_WINDOW)
+left_eye_ratio_history = deque(maxlen=SMOORHING_WINDOW)
+
+
 
 try: 
     while True:
@@ -162,6 +171,21 @@ try:
                 height,
             )
 
+            mouth_ratio_history.append(mouth_ratio)
+            right_eye_ratio_history.append(right_eye_ratio)
+            left_eye_ratio_history.append(left_eye_ratio)
+
+            mouth_ratio = sum(mouth_ratio_history) / len(mouth_ratio_history)
+
+            right_eye_ratio = (
+                sum(right_eye_ratio_history) / len(right_eye_ratio_history)
+            )
+
+            left_eye_ratio = (
+                sum(left_eye_ratio_history)
+                / len(left_eye_ratio_history)
+            )
+
             right_eye_closed = right_eye_ratio < EYE_CLOSED_THRESHOLD
             left_eye_closed = left_eye_ratio < EYE_CLOSED_THRESHOLD
 
@@ -210,7 +234,7 @@ try:
                     -1,
                 )
 
-            cv2.putText(
+                cv2.putText(
                     frame,
                     str(index),
                     (x + 5, y - 5),
@@ -219,6 +243,16 @@ try:
                     point_color,
                     1,
                 )
+
+            right_history_text = ', '.join(
+                f'{value:.2f}'
+                for value in right_eye_ratio_history
+            )
+
+            left_history_text = ', '.join(
+                f'{value:.2f}'
+                for value in left_eye_ratio_history
+            )
 
             cv2.putText(
                     frame,
@@ -254,10 +288,34 @@ try:
                     2,
                 )
 
+            cv2.putText(
+                frame,
+                f'Hist D: [{right_history_text}]',
+                (20, 200),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.55,
+                (200, 200, 200),
+                1,
+            )
+
+            cv2.putText(
+                frame,
+                f'Hist I: [{left_history_text}]',
+                (20, 230),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.55,
+                (200,200,200),
+                1,
+            )
+
         else: 
             message = 'Sin rostro'
             color = (0, 0 , 255)
             closed_frame_count = 0
+
+            mouth_ratio_history.clear()
+            right_eye_ratio_history.clear()
+            left_eye_ratio_history.clear()
         
         cv2.putText(
                     frame,

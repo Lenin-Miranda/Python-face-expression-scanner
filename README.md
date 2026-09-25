@@ -1,113 +1,55 @@
 # Laboratorio de expresiones faciales
 
-Proyecto educativo para aprender visión por computadora desde cero. Primero
-capturaremos imágenes de la cámara; después detectaremos puntos faciales y,
-finalmente, interpretaremos gestos visibles como parpadear o abrir la boca.
+Aplicación educativa de Python que usa la cámara, OpenCV y MediaPipe Face Landmarker para dibujar puntos faciales y detectar movimientos visibles: apertura de boca, cierre de ojos, sonrisa y conteo de parpadeos.
 
-> El programa analizará movimientos visibles del rostro. No puede determinar
-> con certeza las emociones, intenciones o estado mental de una persona.
+El programa analiza movimientos observables; no determina emociones, intenciones ni el estado mental de una persona.
 
-## Qué está preparado
+## Instalación
 
-- Python aislado dentro de `.venv`.
-- OpenCV para acceder a la webcam y dibujar imágenes.
-- MediaPipe Face Landmarker para detectar el rostro y sus puntos.
-- El modelo oficial en `models/face_landmarker.task`.
-- Módulos separados para cámara, configuración, matemáticas, análisis y dibujo.
-- Carpetas locales para imágenes y videos que Git no publicará.
-
-## Abrir el entorno
-
-Desde la raíz del proyecto:
+Necesitas Python compatible con [requirements.txt](requirements.txt), una webcam y un entorno gráfico.
 
 ```bash
+git clone https://github.com/Lenin-Miranda/Python-face-expression-scanner.git
+cd Python-face-expression-scanner
+python3 -m venv .venv
 source .venv/bin/activate
-```
-
-Al activarlo, la terminal mostrará normalmente `(.venv)`. Comprueba que estás
-usando el Python correcto:
-
-```bash
-which python
-python --version
-```
-
-`which python` debe terminar en `.venv/bin/python`.
-
-Para salir del entorno:
-
-```bash
-deactivate
-```
-
-## Ejecutar tu programa
-
-Cuando hayas escrito código en `src/main.py`:
-
-```bash
+python -m pip install -r requirements.txt
 python src/main.py
 ```
 
-La primera vez que uses la cámara, macOS solicitará permiso para la aplicación
-desde la que ejecutas Python (Terminal, iTerm o Visual Studio Code). Si lo
-rechazas, puedes cambiarlo en **Ajustes del Sistema → Privacidad y seguridad →
-Cámara**.
+En Windows PowerShell, activa el entorno con `.venv\Scripts\Activate.ps1`. Las dependencias tienen versiones fijadas; si no hay un paquete binario compatible con tu Python/sistema, revisa esa compatibilidad antes de cambiar las versiones.
 
-Para detener una ventana de OpenCV, usaremos la tecla `q`. Si el proceso no
-responde, vuelve a la terminal y presiona `Control + C`.
+## Uso
 
-## Ruta de las lecciones
+1. Concede permiso de cámara a la terminal o editor.
+2. Coloca un rostro frente a la cámara.
+3. Observa los puntos, indicadores de movimiento y contador.
+4. Pulsa **q** con la ventana activa para cerrar.
 
-1. Abrir y cerrar la webcam correctamente.
-2. Leer fotogramas y mostrarlos en una ventana.
-3. Entender BGR, RGB, resolución y coordenadas.
-4. Enviar un fotograma a MediaPipe.
-5. Dibujar los 478 puntos faciales.
-6. Leer los 52 movimientos faciales (*blendshapes*).
-7. Crear reglas para parpadeo, boca abierta y sonrisa visible.
-8. Reducir el parpadeo de resultados usando varios fotogramas.
-9. Organizar el programa en módulos y añadir pruebas.
-
-No avanzaremos a reconocimiento de identidad hasta dominar estas partes y
-revisar sus implicaciones de privacidad.
+La implementación procesa un rostro por fotograma. La cámara predeterminada es la de índice `0`.
 
 ## Estructura
 
-```text
-.
-├── data/
-│   ├── images/            # Imágenes locales; no se versionan
-│   └── videos/            # Videos locales; no se versionan
-├── models/
-│   └── face_landmarker.task
-├── src/
-│   ├── config.py          # Rutas, índices y umbrales
-│   ├── drawing.py         # Elementos dibujados con OpenCV
-│   ├── expressions.py     # Estado y análisis de expresiones visibles
-│   ├── geometry.py        # Distancias y proporciones
-│   └── main.py            # Cámara y flujo principal
-├── requirements.txt
-└── README.md
-```
+| Archivo | Responsabilidad |
+| --- | --- |
+| [src/main.py](src/main.py) | Captura, detección y cierre de recursos |
+| [src/config.py](src/config.py) | Ruta del modelo, cámara y umbrales |
+| [src/geometry.py](src/geometry.py) | Distancias y proporciones |
+| [src/expressions.py](src/expressions.py) | Estado, suavizado y conteo |
+| [src/drawing.py](src/drawing.py) | Superposición de indicadores |
+| [models/README.md](models/README.md) | Modelo utilizado |
 
-## Recrear el entorno en el futuro
+El modelo `models/face_landmarker.task` está incluido en el repositorio; no forma parte del entorno virtual.
 
-No es necesario hacerlo ahora. Si borras `.venv`, puedes reconstruirlo con:
+## Ajustes y problemas habituales
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
+- **No se abre la cámara:** revisa permisos, otras aplicaciones que la estén usando y `CAMERA_INDEX`.
+- **Modelo no encontrado:** confirma la ruta configurada y que el archivo exista.
+- **Detección inestable:** mejora la iluminación y ajusta umbrales/suavizado en `src/config.py`.
+- **La ventana no aparece:** ejecuta en un escritorio, no en una sesión sin interfaz gráfica.
 
-El entorno virtual es desechable; tus archivos de código y datos están fuera
-de él.
+## Desarrollo y privacidad
 
-## Privacidad
+No hay una suite automatizada incluida. Comprueba apertura/cierre de cámara, pérdida/recuperación del rostro y varios parpadeos al modificar el análisis.
 
-- Practica inicialmente con tu propia cara y con consentimiento.
-- No guardes fotogramas ni grabaciones sin una razón explícita.
-- No publiques `data/` ni bases de rostros.
-- Describe resultados como movimientos faciales observados, no como emociones
-  o diagnósticos psicológicos.
+Practica con consentimiento y no publiques imágenes ni grabaciones personales. El bucle actual procesa fotogramas en memoria y no incluye grabación. Para salir del entorno virtual usa `deactivate`.
